@@ -1,27 +1,128 @@
-import logo from './logo.svg';
-import './App.css';
 import scriptLinks from './script-links';
 import jsInjectorLinks from './js-injector-links';
+import { useState } from 'react';
+import { Grommet, Header, Heading, Main, Form, FormField, TextInput } from 'grommet';
+
+const firebase = window.firebase;
 
 function App() {
+  const [scriptDescription, setScriptDescription] = useState('');
+  const [scriptURL, setScriptURL] = useState('');
+  const [derivativeScripts, setDerivativeScripts] = useState([]);
+  const theme = {
+    global: {
+      family: 'Roboto',
+      size: '14px',
+      height: '20px'
+    }
+  };
+
+  function onScriptDescriptionChange(event) {
+    setScriptDescription(event.target.value);
+  }
+
+  function onDerivativeScriptDescriptionChange(index){
+    return (event) => {
+      const descs = [...derivativeScripts];
+      descs[index].name = event.target.value;
+      setDerivativeScripts(descs);
+    }
+  }
+
+  function onScriptURLChange(event) {
+    setScriptURL(event.target.value);
+  }
+
+  function onDerivativeScriptURLChange(index) {
+    return event => {
+      const descs = [...derivativeScripts];
+      descs[index].link = event.target.value;
+      setDerivativeScripts(descs);
+    };
+  }
+
+  function onDerivativeScriptNoteChange(index) {
+    return event => {
+      const descs = [...derivativeScripts];
+      descs[index].note = event.target.value;
+      setDerivativeScripts(descs);
+    };
+  }
+
+  function onScriptSubmit(event) {
+    event.preventDefault();
+    const db = firebase.database();
+    db.ref('/').push().set({
+      name: scriptDescription, link: scriptURL, forks: derivativeScripts
+    });
+  }
+
+  function onRemoveDerivativeScript(index) {
+    return event => {
+      const descs = [...derivativeScripts];
+      descs.splice(index, 1);
+      setDerivativeScripts(descs);
+    };
+  }
+
+  function onAddDerivativeScript() {
+    const descs = [...derivativeScripts];
+    descs.push({ name: '', link: '', note: '' });
+    setDerivativeScripts(descs);
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>
+    <Grommet theme={theme}>
+      <Header>
+        <Heading level='1'>
           Userscripts and Custom Scripts to Improve Accessibility of Websites
-        </h1>
-      </header>
-      <main role='main'>
-        <h2>Scripts</h2>
+        </Heading>
+      </Header>
+      <Main>
+        <Heading level='2'>Scripts</Heading>
+        <Heading level='3'>Submit a Script</Heading>
+        <Form>
+          <FormField label="Name or short description of script(s)">
+            <TextInput name='script-description' placeholder='A short description of the script...' value={scriptDescription} onChange={onScriptDescriptionChange} />
+          </FormField>
+          <FormField label="Link to homepage of script(s)">
+            <input type='url' name='script-url' placeholder='The URL of a page about the script(s)' value={scriptURL} onChange={onScriptURLChange} />
+          </FormField>
+          {derivativeScripts.map(({ name, link, note }, index) => {
+            return (
+              <div>
+                <FormField label="Name or short description of script(s)">
+                  <TextInput name='script-description' placeholder='A short description of the script...' value={derivativeScripts[index].name} onChange={onDerivativeScriptDescriptionChange(index)} />
+                </FormField>
+                <FormField label="Link to homepage of script(s)">
+                  <input type='url' name='script-url' placeholder='The URL of a page about the script(s)' value={derivativeScripts[index].link} onChange={onDerivativeScriptURLChange(index)} />
+                </FormField>
+                <FormField label="Relationship with original script">
+                  <input type='url' name='script-note' value={derivativeScripts[index].note} onChange={onDerivativeScriptNoteChange(index)} />
+                </FormField>
+                <button type='button' name='remove-derivative-script' onClick={onRemoveDerivativeScript(index)}>Remove derivative script</button>
+              </div>
+            );
+          })}
+          <button type='button' name='add-derivative-script' onClick={onAddDerivativeScript}>Add derivative script</button>
+          <button type='submit' name='sumbit-script' onClick={onScriptSubmit}>Submit script</button>
+        </Form>
         <ul>
-          {scriptLinks.map(({ link, name }) => (
+          {scriptLinks.map(({ link, name, forks = [] }) => (
             <li>
               <a href={link}>{name}</a>
+              <ul>
+                {forks.map(({ link, name, note }) => (
+                  <li>
+                    <a href={link}>{name}</a> &mdash; {note}
+                  </li>
+                ))}
+              </ul>
             </li>
           ))}
         </ul>
-        <h2>How to Run Scripts</h2>
-        <h3>Bookmarklets</h3>
+        <Heading level='2'>How to Run Scripts</Heading>
+        <Heading level='3'>Bookmarklets</Heading>
         <p>
           Bookmarklets are browser bookmarks that run a script embedded in the
           bookmark link when you click on them.
@@ -40,14 +141,14 @@ function App() {
             </a>
           </li>
         </ul>
-        <h3>Browser Extensions for Injecting Scripts into Web Pages</h3>
+        <Heading level='3'>Browser Extensions for Injecting Scripts into Web Pages</Heading>
         <p>
           There may be extensions for your browser that you can use to run code
           on particular websites every time you load that website. Many of them
           work by allowing you to paste a script into their interface and choose
           which websites the script should run on.
         </p>
-        <p>Custom Script Injector Extensions</p>
+        <p>Custom script injector extensions:</p>
         <ul>
           {jsInjectorLinks.map(({ link, name, forks = [] }) => (
             <li>
@@ -62,8 +163,41 @@ function App() {
             </li>
           ))}
         </ul>
-      </main>
-    </div>
+        <Heading level='3'>Userscript Managers</Heading>
+        <p>
+          A userscript is a piece of code designed to augment your web browsing
+          experience. There are are various userscript managers to help your
+          organize userscripts that you use.
+        </p>
+        <p>List of userscript managers:</p>
+        <ul>
+          <li>
+            <a href='https://greasyfork.org/en/help/installing-user-scripts'>
+              Greasy Fork's list of userscript managers
+            </a>
+          </li>
+          <li>
+            <a href='https://www.greasespot.net'>
+              Greasemonkey
+            </a>
+          </li>
+          <li>
+            <a href='https://www.tampermonkey.net'>
+              Tampermonkey
+            </a>
+          </li>
+        </ul>
+        <Heading level='2'>Other Resources</Heading>
+        <ul>
+          <li>
+            <a href='https://github.com/jcsteh/axSHammer'>
+              AxSHammer - Firefox add-on that can manipulate a page to try to
+              make it more accessible
+            </a>
+          </li>
+        </ul>
+      </Main>
+    </Grommet>
   );
 }
 

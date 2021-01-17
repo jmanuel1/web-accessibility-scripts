@@ -1,10 +1,21 @@
 [
   {
     "name": "nvaccess/axSGrease: Greasemonkey scripts to improve the accessibility of various websites (eg Pandora) and to solve common web accessibility problems (eg windowless Flash)",
-    "link": "https://github.com/nvaccess/axSGrease"
+    "link": "https://github.com/nvaccess/axSGrease",
+    "forks": [
+      {
+        "name": "James Teh's version of the userscripts",
+        "link": "https://github.com/jcsteh/axSGrease",
+        "note": "These scripts have been updated more recently."
+      }
+    ]
   },
   {
     "name": "Wikipedia Greasemonkey scripts for Accessibility",
     "link": "https://en.wikipedia.org/wiki/Wikipedia:Tools/Greasemonkey_user_scripts#Accessibility"
+  },
+  {
+    "name": "Bluestream accessibility fix - Switch off Bluestream animations to help disabled users",
+    "link": "https://greasyfork.org/en/scripts/375503-bluestream-accessibility-fix"
   }
 ]
