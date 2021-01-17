@@ -1,11 +1,18 @@
-import scriptLinks from './script-links';
+import useScriptLinks from './script-links';
 import jsInjectorLinks from './js-injector-links';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Grommet, Header, Heading, Main, Form, FormField, TextInput } from 'grommet';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
 
 const firebase = window.firebase;
 
 function App() {
+  const scriptLinks = useScriptLinks();
   const [scriptDescription, setScriptDescription] = useState('');
   const [scriptURL, setScriptURL] = useState('');
   const [derivativeScripts, setDerivativeScripts] = useState([]);
@@ -52,7 +59,7 @@ function App() {
   function onScriptSubmit(event) {
     event.preventDefault();
     const db = firebase.database();
-    db.ref('/').push().set({
+    db.ref('scripts/').push().set({
       name: scriptDescription, link: scriptURL, forks: derivativeScripts
     });
   }
@@ -72,133 +79,200 @@ function App() {
   }
 
   return (
-    <Grommet theme={theme}>
-      <Header>
-        <Heading level='1'>
-          Userscripts and Custom Scripts to Improve Accessibility of Websites
-        </Heading>
-      </Header>
-      <Main>
-        <Heading level='2'>Scripts</Heading>
-        <Heading level='3'>Submit a Script</Heading>
-        <Form>
-          <FormField label="Name or short description of script(s)">
-            <TextInput name='script-description' placeholder='A short description of the script...' value={scriptDescription} onChange={onScriptDescriptionChange} />
-          </FormField>
-          <FormField label="Link to homepage of script(s)">
-            <input type='url' name='script-url' placeholder='The URL of a page about the script(s)' value={scriptURL} onChange={onScriptURLChange} />
-          </FormField>
-          {derivativeScripts.map(({ name, link, note }, index) => {
-            return (
-              <div>
+    <Router>
+      <Grommet theme={theme}>
+        <Header>
+          <Heading level='1'>
+            Userscripts and Custom Scripts to Improve Accessibility of Websites
+          </Heading>
+        </Header>
+        <Main>
+          <Switch>
+            <Route path='/script/:scriptID' component={({ match: { params: { scriptID } } }) => <Script id={scriptID} />} />
+            <Route exact path='/'>
+              <Heading level='2'>Scripts</Heading>
+              <Heading level='3'>Submit a Script</Heading>
+              <Form>
                 <FormField label="Name or short description of script(s)">
-                  <TextInput name='script-description' placeholder='A short description of the script...' value={derivativeScripts[index].name} onChange={onDerivativeScriptDescriptionChange(index)} />
+                  <TextInput name='script-description' placeholder='A short description of the script...' value={scriptDescription} onChange={onScriptDescriptionChange} />
                 </FormField>
                 <FormField label="Link to homepage of script(s)">
-                  <input type='url' name='script-url' placeholder='The URL of a page about the script(s)' value={derivativeScripts[index].link} onChange={onDerivativeScriptURLChange(index)} />
+                  <input type='url' name='script-url' placeholder='The URL of a page about the script(s)' value={scriptURL} onChange={onScriptURLChange} />
                 </FormField>
-                <FormField label="Relationship with original script">
-                  <input type='url' name='script-note' value={derivativeScripts[index].note} onChange={onDerivativeScriptNoteChange(index)} />
-                </FormField>
-                <button type='button' name='remove-derivative-script' onClick={onRemoveDerivativeScript(index)}>Remove derivative script</button>
-              </div>
-            );
-          })}
-          <button type='button' name='add-derivative-script' onClick={onAddDerivativeScript}>Add derivative script</button>
-          <button type='submit' name='sumbit-script' onClick={onScriptSubmit}>Submit script</button>
-        </Form>
-        <ul>
-          {scriptLinks.map(({ link, name, forks = [] }) => (
-            <li>
-              <a href={link}>{name}</a>
+                {derivativeScripts.map(({ name, link, note }, index) => {
+                  return (
+                    <div>
+                      <FormField label="Name or short description of script(s)">
+                        <TextInput name='script-description' placeholder='A short description of the script...' value={derivativeScripts[index].name} onChange={onDerivativeScriptDescriptionChange(index)} />
+                      </FormField>
+                      <FormField label="Link to homepage of script(s)">
+                        <input type='url' name='script-url' placeholder='The URL of a page about the script(s)' value={derivativeScripts[index].link} onChange={onDerivativeScriptURLChange(index)} />
+                      </FormField>
+                      <FormField label="Relationship with original script">
+                        <input type='url' name='script-note' value={derivativeScripts[index].note} onChange={onDerivativeScriptNoteChange(index)} />
+                      </FormField>
+                      <button type='button' name='remove-derivative-script' onClick={onRemoveDerivativeScript(index)}>Remove derivative script</button>
+                    </div>
+                  );
+                })}
+                <button type='button' name='add-derivative-script' onClick={onAddDerivativeScript}>Add derivative script</button>
+                <button type='submit' name='sumbit-script' onClick={onScriptSubmit}>Submit script</button>
+              </Form>
               <ul>
-                {forks.map(({ link, name, note }) => (
+                {scriptLinks && scriptLinks.map(({ link, name, forks = [], id }) => (
                   <li>
-                    <a href={link}>{name}</a> &mdash; {note}
+                    <a href={link}>{name}</a>
+                    <ul>
+                      {forks.map(({ link, name, note }) => (
+                        <li>
+                          <a href={link}>{name}</a> &mdash; {note}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link to={`/script/${id}`}>View and make comments about this script</Link>
                   </li>
                 ))}
               </ul>
-            </li>
-          ))}
-        </ul>
-        <Heading level='2'>How to Run Scripts</Heading>
-        <Heading level='3'>Bookmarklets</Heading>
-        <p>
-          Bookmarklets are browser bookmarks that run a script embedded in the
-          bookmark link when you click on them.
-        </p>
-        <p>Resources to learn about bookmarklets:</p>
-        <ul>
-          <li>
-            <a href='https://support.mozilla.org/en-US/kb/bookmarklets-perform-common-web-page-tasks'>
-              Use bookmarklets to quickly perform common web page tasks |
-              Firefox Help
-            </a>
-          </li>
-          <li>
-            <a href='https://en.wikipedia.org/wiki/Bookmarklet'>
-              Wikipedia page on bookmarkets
-            </a>
-          </li>
-        </ul>
-        <Heading level='3'>Browser Extensions for Injecting Scripts into Web Pages</Heading>
-        <p>
-          There may be extensions for your browser that you can use to run code
-          on particular websites every time you load that website. Many of them
-          work by allowing you to paste a script into their interface and choose
-          which websites the script should run on.
-        </p>
-        <p>Custom script injector extensions:</p>
-        <ul>
-          {jsInjectorLinks.map(({ link, name, forks = [] }) => (
-            <li>
-              <a href={link}>{name}</a>
+              <Heading level='2'>How to Run Scripts</Heading>
+              <Heading level='3'>Bookmarklets</Heading>
+              <p>
+                Bookmarklets are browser bookmarks that run a script embedded in the
+                bookmark link when you click on them.
+              </p>
+              <p>Resources to learn about bookmarklets:</p>
               <ul>
-                {forks.map(({ link, name, note }) => (
+                <li>
+                  <a href='https://support.mozilla.org/en-US/kb/bookmarklets-perform-common-web-page-tasks'>
+                    Use bookmarklets to quickly perform common web page tasks |
+                    Firefox Help
+                  </a>
+                </li>
+                <li>
+                  <a href='https://en.wikipedia.org/wiki/Bookmarklet'>
+                    Wikipedia page on bookmarkets
+                  </a>
+                </li>
+              </ul>
+              <Heading level='3'>Browser Extensions for Injecting Scripts into Web Pages</Heading>
+              <p>
+                There may be extensions for your browser that you can use to run code
+                on particular websites every time you load that website. Many of them
+                work by allowing you to paste a script into their interface and choose
+                which websites the script should run on.
+              </p>
+              <p>Custom script injector extensions:</p>
+              <ul>
+                {jsInjectorLinks.map(({ link, name, forks = [] }) => (
                   <li>
-                    <a href={link}>{name}</a> &mdash; {note}
+                    <a href={link}>{name}</a>
+                    <ul>
+                      {forks.map(({ link, name, note }) => (
+                        <li>
+                          <a href={link}>{name}</a> &mdash; {note}
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 ))}
               </ul>
-            </li>
-          ))}
-        </ul>
-        <Heading level='3'>Userscript Managers</Heading>
-        <p>
-          A userscript is a piece of code designed to augment your web browsing
-          experience. There are are various userscript managers to help your
-          organize userscripts that you use.
-        </p>
-        <p>List of userscript managers:</p>
-        <ul>
-          <li>
-            <a href='https://greasyfork.org/en/help/installing-user-scripts'>
-              Greasy Fork's list of userscript managers
-            </a>
-          </li>
-          <li>
-            <a href='https://www.greasespot.net'>
-              Greasemonkey
-            </a>
-          </li>
-          <li>
-            <a href='https://www.tampermonkey.net'>
-              Tampermonkey
-            </a>
-          </li>
-        </ul>
-        <Heading level='2'>Other Resources</Heading>
-        <ul>
-          <li>
-            <a href='https://github.com/jcsteh/axSHammer'>
-              AxSHammer - Firefox add-on that can manipulate a page to try to
-              make it more accessible
-            </a>
-          </li>
-        </ul>
-      </Main>
-    </Grommet>
+              <Heading level='3'>Userscript Managers</Heading>
+              <p>
+                A userscript is a piece of code designed to augment your web browsing
+                experience. There are are various userscript managers to help your
+                organize userscripts that you use.
+              </p>
+              <p>List of userscript managers:</p>
+              <ul>
+                <li>
+                  <a href='https://greasyfork.org/en/help/installing-user-scripts'>
+                    Greasy Fork's list of userscript managers
+                  </a>
+                </li>
+                <li>
+                  <a href='https://www.greasespot.net'>
+                    Greasemonkey
+                  </a>
+                </li>
+                <li>
+                  <a href='https://www.tampermonkey.net'>
+                    Tampermonkey
+                  </a>
+                </li>
+              </ul>
+              <Heading level='2'>Other Resources</Heading>
+              <ul>
+                <li>
+                  <a href='https://github.com/jcsteh/axSHammer'>
+                    AxSHammer - Firefox add-on that can manipulate a page to try to
+                    make it more accessible
+                  </a>
+                </li>
+              </ul>
+            </Route>
+          </Switch>
+        </Main>
+      </Grommet>
+    </Router>
   );
+}
+
+function Script({ id }) {
+  const comments = useComments(id);
+  const script = useScript(id);
+
+  if (!script) {
+    return <p>Loading script information...</p>;
+  }
+
+  const { link, name, forks = [] } = script;
+
+  return (
+    <>
+      <Heading level='2'>Script Information</Heading>
+      <a href={link}>{name}</a>
+      <ul>
+        {forks.map(({ link, name, note }) => (
+          <li>
+            <a href={link}>{name}</a> &mdash; {note}
+          </li>
+        ))}
+      </ul>
+      <Heading level='2'>Comments</Heading>
+      {comments ? <ol>
+        {comments.map(comment => <li>{comment.content.text}</li>)}
+      </ol> : <p>Loading comments...</p>}
+    </>
+  );
+}
+
+function useComments(id) {
+  const [comments, setComments] = useState(null);
+
+  // webmentions
+  useEffect(() => {
+    setComments(null);
+    fetch(`https://webmention.io/api/mentions.jf2?target=${window.location.href}`).then(
+      response => response.json()
+    ).then(
+      json => {
+        setComments(json.children);
+      }
+    )
+  }, [id]);
+
+  return comments;
+}
+
+function useScript(id) {
+  const [script, setScript] = useState(null);
+
+  useEffect(() => {
+    setScript(null);
+    const db = firebase.database();
+    db.ref(`${id}/`).once('value').then(snapshot => setScript(snapshot.val()));
+  }, [id]);
+
+  return script;
 }
 
 export default App;
