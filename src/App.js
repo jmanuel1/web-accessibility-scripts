@@ -11,7 +11,7 @@ function App() {
           Userscripts and Custom Scripts to Improve Accessibility of Websites
         </h1>
       </header>
-      <main rule='main'>
+      <main role='main'>
         <h2>Scripts</h2>
         <ul>
           {scriptLinks.map(({ link, name }) => (
