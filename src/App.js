@@ -3,7 +3,7 @@ import jsInjectorLinks from './js-injector-links';
 import { useState, useEffect } from 'react';
 import { Grommet, Header, Heading, Main, Form, FormField, TextInput } from 'grommet';
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   Switch,
   Route,
   Link
