@@ -6,7 +6,8 @@ import {
   HashRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  useLocation
 } from "react-router-dom";
 
 const firebase = window.firebase;
@@ -247,18 +248,22 @@ function Script({ id }) {
 
 function useComments(id) {
   const [comments, setComments] = useState(null);
+  const location = useLocation();
 
   // webmentions
   useEffect(() => {
+    const DEPLOY_URL = 'https://web-accessibility-scripts.jason-manuel.com/';
+    const pageURL = encodeURIComponent(`${DEPLOY_URL}#${location.pathname}`);
+    const requestURL = `https://webmention.io/api/mentions.jf2?target=${pageURL}`;
     setComments(null);
-    fetch(`https://webmention.io/api/mentions.jf2?target=${window.location.href}`).then(
+    fetch(requestURL).then(
       response => response.json()
     ).then(
       json => {
         setComments(json.children);
       }
     )
-  }, [id]);
+  }, [id, location.pathname]);
 
   return comments;
 }
