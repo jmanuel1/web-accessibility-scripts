@@ -1,5 +1,6 @@
 import useScriptLinks from './script-links';
 import jsInjectorLinks from './js-injector-links';
+import CommentForm from './CommentForm';
 import { useState, useEffect } from 'react';
 import { Grommet, Header, Heading, Main, Form, FormField, TextInput } from 'grommet';
 import {
@@ -218,7 +219,7 @@ function App() {
 }
 
 function Script({ id }) {
-  const comments = useComments(id);
+  const { comments, refresh } = useComments();
   const script = useScript(id);
 
   if (!script) {
@@ -238,6 +239,8 @@ function Script({ id }) {
           </li>
         ))}
       </ul>
+      <Heading level='2'>Submit a Comment</Heading>
+      <CommentForm onSubmit={refresh} />
       <Heading level='2'>Comments</Heading>
       {comments ? <ol>
         {comments.map(comment => <li>{comment.content.text}</li>)}
@@ -246,12 +249,12 @@ function Script({ id }) {
   );
 }
 
-function useComments(id) {
+function useComments() {
   const [comments, setComments] = useState(null);
   const location = useLocation();
 
   // webmentions
-  useEffect(() => {
+  function refresh() {
     const DEPLOY_URL = 'https://web-accessibility-scripts.jason-manuel.com/';
     const pageURL = encodeURIComponent(`${DEPLOY_URL}#${location.pathname}`);
     const requestURL = `https://webmention.io/api/mentions.jf2?target=${pageURL}`;
@@ -263,9 +266,11 @@ function useComments(id) {
         setComments(json.children);
       }
     )
-  }, [id, location.pathname]);
+  }
 
-  return comments;
+  useEffect(refresh, [location.pathname]);
+
+  return { comments, refresh };
 }
 
 function useScript(id) {
