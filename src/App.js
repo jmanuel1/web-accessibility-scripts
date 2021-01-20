@@ -61,7 +61,7 @@ function App() {
   function onScriptSubmit(event) {
     event.preventDefault();
     const db = firebase.database();
-    db.ref('scripts/').push().set({
+    db.ref('/').push().set({
       name: scriptDescription, link: scriptURL, forks: derivativeScripts
     });
   }
